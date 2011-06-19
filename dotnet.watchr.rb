@@ -1,9 +1,14 @@
+# This class helps call growlnotify with the given parameters.
 class GrowlNotifier
+
+  # Executes growlnotify
   def self.notify( title, message, icon = nil )
-    if icon
-      Kernel.system('growlnotify', '-t', title, '-m', message, '-i', icon)
-    else
-      Kernel.system('growlnotify', '-t', title, '-m', message)
-    end
+
+    # Setup parameters for growl
+    params = ['-t', title, '-m', message]
+    params |= ['-i', icon] if icon
+
+    # Run growlnotify
+    Kernel.system('growlnotify', *params)
   end
 end
