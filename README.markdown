@@ -2,7 +2,7 @@ watchr.net
 ==========
 
 Continuous testing environment for mono and .NET.  Uses the
-[watchr gem](https://github.com/mynyml/watchr) to watch the file system for changes.
+[watchr](https://github.com/mynyml/watchr) ruby gem to watch the file system for changes.
 
 TODO
 ----
