@@ -19,23 +19,29 @@ class GrowlNotifier
 end
 
 def projects_for_file( file )
+
+  # Project files should be built if changed
+  return [file] if file =~ /\.(cs|vb)proj$/
+
   base_file = File.basename( file ).gsub(/\./, '\\.')
   regex = "Compile Include=\\\".*#{base_file}\\\""
-  `grep -RHl --include "*.csproj" "#{regex}" *`.split
+  `grep -RHl --include "*.??proj" "#{regex}" *`.split
 end
 
-watch( '.*\.cs' ) do |cs|
-  projects_for_file(cs[0]).each do |f|
-    GrowlNotifier.notify 'Building Project', "Building #{f}"
-    puts ( results = `xbuild /nologo /verbosity:quiet #{f}`.split("\n") )
+def build( project = nil )
+  GrowlNotifier.notify 'Building', "Building #{project || 'Solution'}"
+  puts ( results = `xbuild /nologo /verbosity:quiet #{project}`.split("\n") )
 
-    warnings = results.select{|r| r.include?('warning') }.length
-    errors = results.select{|r| r.include?('error') }.length
+  warnings = results.select{|r| r.include?('warning') }.length
+  errors = results.select{|r| r.include?('error') }.length
 
-    result = errors == 0 ? 'Successful' : 'Failed'
+  result = ( errors == 0 ? 'Successful' : 'Failed' )
 
-    GrowlNotifier.notify "Build #{result}", "Warnings: #{warnings}, Errors: 0"
-  end
+  GrowlNotifier.notify "Build #{result}", "Errors: #{errors}, Warnings: #{warnings}"
+end
+
+watch( '.*\.(cs|vb)(proj)?$' ) do |file|
+  projects_for_file(file[0]).each{|f| build(f) }
 end
 
 # --------------------------------------------------
@@ -44,10 +50,9 @@ end
 # Ctrl-\
 Signal.trap('QUIT') do
   puts " --- Running all tests ---\n\n"
-  #run_all_tests
+  build
 end
 
 # Ctrl-C
 Signal.trap('INT') { abort("\n") }
-
 GrowlNotifier.notify 'Watchr Loaded', 'System ready'
