@@ -4,6 +4,9 @@ class GrowlNotifier
   # Executes growlnotify
   def self.notify( title, message, icon = nil )
 
+    # Put to the console also
+    puts title, message
+
     # Setup parameters for growl
     params = ['-t', title, '-m', message]
     params |= ['-i', icon] if icon
@@ -41,17 +44,27 @@ class CodeFinder
   end
 end
 
+GrowlNotifier.notify 'Watchr Loaded', 'System ready'
+
 watch( '.*\.cs' ) do |cs|
-  puts "File changed: #{cs}"
   projects_for_file(cs[0]).each do |f|
-    puts "Building #{f}"
-    `xbuild #{f}`
+    GrowlNotifier.notify 'Building Project', "Building #{f}"
+    results = `xbuild /nologo /verbosity:quiet #{f}`.split("\n")
+
+    puts results
+
+    warnings = results.select{|r| r.include?('warning') }.length
+    errors = results.select{|r| r.include?('error') }.length
+
+    result = errors == 0 ? 'Successful' : 'Failed'
+
+    GrowlNotifier.notify "Build #{result}", "Warnings: #{warnings}, Errors: 0"
   end
 end
 
-watch('.*/bin/.*dll$') do |md|
+watch('.*/bin/.*dll11$') do |md|
   puts projects_for_file(md[0])
-
+  return
   puts "#{md} changed"
   test_dll = CodeFinder.new( md[0] ).test_output
 
