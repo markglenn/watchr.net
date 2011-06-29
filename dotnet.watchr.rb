@@ -28,6 +28,11 @@ def projects_for_file( file )
   `grep -RHl --include "*.??proj" "#{regex}" *`.split
 end
 
+def test_project_for_project( project )
+  base_file = File.basename( project, '.csproj' )
+  Dir.glob("**/{base_file}.Tests.csproj").first
+end
+
 def build( project = nil )
   GrowlNotifier.notify 'Building', "Building #{project || 'Solution'}"
   puts ( results = `xbuild /nologo /verbosity:quiet #{project}`.split("\n") )
@@ -38,6 +43,17 @@ def build( project = nil )
   result = ( errors == 0 ? 'Successful' : 'Failed' )
 
   GrowlNotifier.notify "Build #{result}", "Errors: #{errors}, Warnings: #{warnings}"
+end
+
+def test( project )
+  project = test_project_for_project( project )
+
+  if project
+    GrowlNotifier.notify 'Running tests', "Testing #{project || 'Solution'}"
+
+    puts ( results = `nunit-console4 -noshadow -nologo #{project}`.split("\n") )
+  end
+
 end
 
 watch( '.*\.(cs|vb)(proj)?$' ) do |file|
