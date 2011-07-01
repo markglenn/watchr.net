@@ -52,12 +52,20 @@ def test( project )
     GrowlNotifier.notify 'Running tests', "Testing #{project || 'Solution'}"
 
     puts ( results = `nunit-console4 -noshadow -nologo #{project}`.split("\n") )
+
+    matches = results.match(/Tests run: (\d+), Failures: (\d+)/)
+
+    if matches
+      result = matches[2].to_i == 0 ? "Success" : "Failed"
+      GrowlNotifier "Test #{result}", "Tests run: #{matches[1]}, Failures: #{matches[2]}"
+    end
   end
 
 end
 
 watch( '.*\.(cs|vb)(proj)?$' ) do |file|
-  projects_for_file(file[0]).each{|f| build(f) }
+  #projects_for_file(file[0]).each{|f| build(f) }
+  build( 'visualdb.sln' )
 end
 
 # --------------------------------------------------
